@@ -1,44 +1,27 @@
 # n8n Deployments
 
-This repository contains the configuration files to deploy an n8n instance using Docker Compose. It supports multiple environments (staging and production).
+## Introduction
+This repository contains the configuration files to deploy an n8n instance using Docker Compose.
+It's goal is to provide a simple and reproducible way to deploy n8n on different servers using GitHub Actions.
 
-## Prerequisites
+By default, the deployment uses Traefik as a reverse proxy and handles SSL termination using Let's Encrypt for a very simple setup.
+If you deploy n8n to a server that has other uses, you might want to disable Traefik and use an external reverse proxy instead, see configuration details below.
 
+## Server Prerequisites
 - Docker and Docker Compose installed on the server.
 - SSH access to the server.
 - GitHub repository secrets configured for deployment.
 
-## Setup
-
-1. Clone this repository:
+## Quick Start
+1. Fork or Clone this repository:
    ```bash
    git clone https://github.com/Norbz/n8n-deployments.git
    cd n8n-deployments
    ```
 
-2. Copy the `.env.example` file to `.env` and update the values:
-   ```bash
-   cp .env.example .env
-   ```
+2. Set up your GitHub environment
 
-3. Update the `docker-compose.yml` file if needed.
-
-## Deployment
-
-This repository uses GitHub Actions to deploy the application to a server.
-
-1. Configure the following secrets in your GitHub repository:
-   - `HOST_SSH_PRIVATE_KEY`: SSH private key for server access.
-   - `HOST_USER`: Server username.
-   - `HOST_NAME`: Server hostname.
-   - `SSL_EMAIL`: Email for SSL certificates.
-   - `SUBDOMAIN`, `DOMAIN_NAME`: Domain configuration.
-   - `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`: Database credentials.
-
-2. Trigger the deployment manually:
-   - Go to the **Actions** tab in GitHub.
-   - Select the **Deploy to VPS** workflow.
-   - Choose the environment (staging or production) and click **Run workflow**.
+3. Trigger the deployment in Github Actions.
 
 ## Generating and Adding an SSH Key
 
@@ -65,46 +48,57 @@ This repository uses GitHub Actions to deploy the application to a server.
 
 4. **Add the Private Key to GitHub Secrets**:
    - Open your GitHub repository.
-   - Go to **Settings > Secrets and variables > Actions**.
-   - Add a new secret named `HOST_SSH_PRIVATE_KEY` and paste the contents of your private key (e.g., `~/.ssh/id_rsa`).
+   - Click on **Settings** > **Environments**.
+   - Create or select an environment (e.g., staging or production).
+   - Add a new secret named `HOST_SSH_PRIVATE_KEY` to the environment settings and paste the contents of your private key (e.g., `~/.ssh/id_rsa`).
 
    **Important**: Never share your private key and keep it secure.
 
-## Updated Variables
+## Variables
 
-1. **Set the Remote Path**:
-   Define the `HOST_REMOTE_PATH` variable in your `.env` file to specify where the project should be deployed on the server. For example:
-   ```bash
-   HOST_REMOTE_PATH=/var/www/n8n-deployments
-   ```
+As this repository aims at deploying community N8N to different servers, the variables will be grouped in an environment.
+### Environments
+**Create a github environment**:
+- Go to your GitHub repository.
+- Click on **Settings** > **Environments**.
+- Create at least one environment
 
-2. **N8N Variables**:
-   Ensure the following variables are set in your `.env` file:
-   ```bash
-   N8N_SSL_EMAIL=example@example.com
-   N8N_SUBDOMAIN=subdomain
-   N8N_DOMAIN_NAME=example.com
-   N8N_POSTGRES_USER=postgres_user
-   N8N_POSTGRES_PASSWORD=postgres_password
-   N8N_POSTGRES_DB=postgres_db
-   ```
+### Secrets
+These variables should be added as your environment secrets:
+- `HOST_SSH_PRIVATE_KEY`: SSH private key for server access.
+- `HOST_USER`: Server username.
+- `HOST_NAME`: Server hostname.
+- `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`: Database credentials.
 
-3. **Ensure Permissions**:
-   Make sure the specified directory exists on the server and the user has the necessary permissions to write to it.
+### Environment Variables
+These variables should be defined as your environment variables:
+- `HOST_REMOTE_PATH`: Path on the server where the project will be deployed.
+- `N8N_SSL_EMAIL`: Email for SSL certificates.
+- `N8N_SUBDOMAIN`, `N8N_DOMAIN_NAME`: Domain configuration.
+- `ENABLE_TRAEFIK`: Set to `1` to enable Traefik, or `0` to disable it.
 
-## File Structure
+## Deployments
+This repository uses GitHub Actions to deploy the application to a server.
 
-- `.env.example`: Example environment variables.
-- `docker-compose.yml`: Docker Compose configuration.
-- `.github/workflows/deploy.yml`: GitHub Action for deployment.
+1. **Ensure Your Environment is Set Up**:
+   - Make sure you have created the necessary GitHub environment and added all required secrets and variables.
+   - Make sure your server meets the prerequisites.
+   - Make sure your SSH key is added to the server and GitHub secrets.
+   - Make sure your user can write in `HOST_REMOTE_PATH`
 
-## Notes
+2. **Run the Deployment Workflow**:
+   - Go to the **Actions** tab in GitHub.
+   - Select the **Deploy to Host** workflow.
+   - Choose the environment (staging or production) and click **Run workflow**.
 
-- Ensure the `volumes` defined in `docker-compose.yml` exist on the server.
-- The `traefik_data`, `n8n_data`, and `postgres_data` volumes must be created as external Docker volumes.
+### What does the Github Action do?
+The GitHub Action will simply connect to your server via SSH, copy the files in the specified remote path, create the .env file for you based on your github environment variables, and run `docker compose up -d --build` to start the n8n instance.
 
-## Troubleshooting
+## Using an External Reverse Proxy
+You might want to deploy n8n on a server that already has a Apache or set up to handle SSL termination and routing.
+If you are using an external reverse proxy (e.g., Nginx or Apache), you can disable Traefik by setting `ENABLE_TRAEFIK=0` in your GitHub environment variables.
+Refer to the [reverse proxy documentation](docs/reverse-proxies.md) for detailed setup instructions.
 
-- Check the GitHub Actions logs for deployment errors.
-- Verify the `.env` file on the server is correctly populated.
-- Ensure Docker and Docker Compose are running on the server.
+---
+
+For more details, check the `docker-compose.yml` and `.github/workflows/deploy.yml` files.
