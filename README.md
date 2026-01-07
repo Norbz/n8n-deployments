@@ -25,34 +25,36 @@ If you deploy n8n to a server that has other uses, you might want to disable Tra
 
 ## Generating and Adding an SSH Key
 
+This assume you already have set up an SSH key to log into your server. If not, you can follow the same steps, but add a passphrase to the key you will keep on your computer.
+
 1. **Generate an SSH Key**:
    On your local machine, run the following command to generate an SSH key pair:
    ```bash
    ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
    ```
-   - When prompted, specify a file to save the key (e.g., `~/.ssh/id_rsa`) or press Enter to use the default location.
-   - Set a passphrase for added security (optional).
+   - When prompted, specify a file to save the key (e.g., `~/.ssh/id_rsa_gh`) or press Enter to use the default location.
+   - Do not set a pasphrase as this key will be used for GH action only
 
 2. **Add the Public Key to Your Server**:
    Copy the public key to your server:
    ```bash
-   ssh-copy-id -i ~/.ssh/id_rsa.pub user@your_server_ip
+   ssh-copy-id -i ~/.ssh/id_rsa_gh.pub user@your_server_ip
    ```
    Replace `user` with your server username and `your_server_ip` with your server's IP address or hostname.
 
 3. **Test the Connection**:
-   Verify that you can connect to the server without a password:
+   Verify that you can connect to the server without a password using the key you just created:
    ```bash
-   ssh user@your_server_ip
+   ssh -i -i ~/.ssh/id_rsa_gh user@your_server_ip
    ```
 
 4. **Add the Private Key to GitHub Secrets**:
    - Open your GitHub repository.
    - Click on **Settings** > **Environments**.
    - Create or select an environment (e.g., staging or production).
-   - Add a new secret named `HOST_SSH_PRIVATE_KEY` to the environment settings and paste the contents of your private key (e.g., `~/.ssh/id_rsa`).
+   - Add a new secret named `HOST_SSH_PRIVATE_KEY` to the environment settings and paste the contents of your private key (e.g., `~/.ssh/id_rsa_gh`).
 
-   **Important**: Never share your private key and keep it secure.
+   **Important**: Never share your private key and keep it secure. As this key has no passphrase, you might even want to delete it
 
 ## Variables
 
