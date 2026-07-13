@@ -99,6 +99,13 @@ The GitHub Action will simply connect to your server via SSH, copy the files in 
 ## Using an External Reverse Proxy
 You might want to deploy n8n on a server that already has a Apache or set up to handle SSL termination and routing.
 If you are using an external reverse proxy (e.g., Nginx or Apache), you can disable Traefik by setting `ENABLE_TRAEFIK=0` in your GitHub environment variables.
+
+When Nginx Proxy Manager runs on the same Docker host, it can reach n8n through
+the shared external `proxy` network. The deployment workflow creates this
+network automatically. Configure the NPM Proxy Host with scheme `http`, forward
+hostname `n8n`, forward port `5678`, and enable Websockets Support. PostgreSQL
+remains isolated on the stack's default network.
+
 Refer to the [reverse proxy documentation](docs/reverse-proxies.md) for detailed setup instructions.
 
 ---

@@ -39,6 +39,10 @@ jobs:
           echo "Copying docker-compose.yml to server"
           scp docker-compose.yml ${{ secrets.HOST_USER }}@${{ secrets.HOST_NAME }}:${{ vars.HOST_REMOTE_PATH }}/docker-compose.yml
 
+      - name: Ensure proxy network exists
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.HOST_USER }}@${{ secrets.HOST_NAME }} "docker network inspect proxy >/dev/null 2>&1 || docker network create proxy"
+
       - name: Rebuild and restart Docker Compose services
         run: |
           echo "Rebuilding and restarting Docker Compose services"
