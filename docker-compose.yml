@@ -66,6 +66,9 @@ services:
       - ./local-files:/files
     depends_on:
       - postgres
+    networks:
+      - default
+      - proxy
 
   postgres:
     image: postgres:15-alpine
@@ -79,6 +82,11 @@ services:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "127.0.0.1:5432:5432"
+
+networks:
+  proxy:
+    name: proxy
+    external: true
 
 volumes:
   traefik_data:
