@@ -6,7 +6,7 @@ on:
       environment:
         description: "Deployment environment"
         required: true
-        default: "production"
+        default: "norbz_tech"
         type: environment
 
 jobs:
@@ -14,7 +14,7 @@ jobs:
     name: Deploy to Host
     runs-on: ubuntu-latest
     environment:
-      name: ${{ inputs.environment || (github.event_name == 'release' && github.event.action == 'published' && 'preprod' || 'preprod') }}
+      name: ${{ inputs.environment }}
       url: ${{ github.jobs.deploy.outputs.page_url || vars.PAGE_URL || ''}}
 
     steps:
@@ -26,13 +26,10 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.HOST_SSH_PRIVATE_KEY }}
 
-      - name: Set ENABLE_TRAEFIK environment variable
-        run: echo "ENABLE_TRAEFIK=${{ vars.ENABLE_TRAEFIK || '1' }}" >> $GITHUB_ENV
-
       - name: Copy .env file to server
         run: |
           echo "Creating .env file on server"
-          ssh -o StrictHostKeyChecking=no ${{ secrets.HOST_USER }}@${{ secrets.HOST_NAME }} "echo \"$(cat .env.example | sed 's/example@example.com/${{ vars.N8N_SSL_EMAIL }}/' | sed 's/subdomain/${{ vars.N8N_SUBDOMAIN }}/' | sed 's/example.com/${{ vars.N8N_DOMAIN_NAME }}/' | sed 's/postgres_user/${{ secrets.N8N_POSTGRES_USER }}/' | sed 's/postgres_password/${{ secrets.N8N_POSTGRES_PASSWORD }}/' | sed 's/postgres_db/${{ secrets.N8N_POSTGRES_DB }}/' | sed 's/ENABLE_TRAEFIK=1/ENABLE_TRAEFIK=${{ vars.ENABLE_TRAEFIK || '1' }}/')\" > ${{ vars.HOST_REMOTE_PATH }}/.env"
+          ssh -o StrictHostKeyChecking=no ${{ secrets.HOST_USER }}@${{ secrets.HOST_NAME }} "echo \"$(cat .env.example | sed 's/subdomain/${{ vars.N8N_SUBDOMAIN }}/' | sed 's/example.com/${{ vars.N8N_DOMAIN_NAME }}/' | sed 's/postgres_user/${{ secrets.N8N_POSTGRES_USER }}/' | sed 's/postgres_password/${{ secrets.N8N_POSTGRES_PASSWORD }}/' | sed 's/postgres_db/${{ secrets.N8N_POSTGRES_DB }}/')\" > ${{ vars.HOST_REMOTE_PATH }}/.env"
 
       - name: Copy docker-compose.yml to server
         run: |

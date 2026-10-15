@@ -4,11 +4,11 @@
 This repository contains the configuration files to deploy an n8n instance using Docker Compose.
 It's goal is to provide a simple and reproducible way to deploy n8n on different servers using GitHub Actions.
 
-By default, the deployment uses Traefik as a reverse proxy and handles SSL termination using Let's Encrypt for a very simple setup.
-If you deploy n8n to a server that has other uses, you might want to disable Traefik and use an external reverse proxy instead, see configuration details below.
+n8n is served by the reverse proxy of the server, which handles HTTPS: a server-wide Traefik, through the labels of `docker-compose.yml`, or any other proxy (see [Reverse proxy](#reverse-proxy)).
 
 ## Server Prerequisites
 - Docker and Docker Compose installed on the server.
+- A reverse proxy owning ports 80/443 on the server.
 - SSH access to the server.
 - GitHub repository secrets configured for deployment.
 
@@ -51,7 +51,7 @@ This assume you already have set up an SSH key to log into your server. If not, 
 4. **Add the Private Key to GitHub Secrets**:
    - Open your GitHub repository.
    - Click on **Settings** > **Environments**.
-   - Create or select an environment (e.g., staging or production).
+   - Create or select an environment (e.g., `norbz_tech`, named after the server).
    - Add a new secret named `HOST_SSH_PRIVATE_KEY` to the environment settings and paste the contents of your private key (e.g., `~/.ssh/id_rsa_gh`).
 
    **Important**: Never share your private key and keep it secure. As this key has no passphrase, you might even want to delete it
@@ -70,14 +70,13 @@ These variables should be added as your environment secrets:
 - `HOST_SSH_PRIVATE_KEY`: SSH private key for server access.
 - `HOST_USER`: Server username.
 - `HOST_NAME`: Server hostname.
-- `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`: Database credentials.
+- `N8N_POSTGRES_USER`, `N8N_POSTGRES_PASSWORD`, `N8N_POSTGRES_DB`: Database credentials.
 
 ### Environment Variables
 These variables should be defined as your environment variables:
 - `HOST_REMOTE_PATH`: Path on the server where the project will be deployed.
-- `N8N_SSL_EMAIL`: Email for SSL certificates.
 - `N8N_SUBDOMAIN`, `N8N_DOMAIN_NAME`: Domain configuration.
-- `ENABLE_TRAEFIK`: Set to `1` to enable Traefik, or `0` to disable it.
+- `PAGE_URL`: URL shown on the deployment in GitHub (optional).
 
 ## Deployments
 This repository uses GitHub Actions to deploy the application to a server.
@@ -91,14 +90,16 @@ This repository uses GitHub Actions to deploy the application to a server.
 2. **Run the Deployment Workflow**:
    - Go to the **Actions** tab in GitHub.
    - Select the **Deploy to Host** workflow.
-   - Choose the environment (staging or production) and click **Run workflow**.
+   - Choose the environment and click **Run workflow**.
 
 ### What does the Github Action do?
 The GitHub Action will simply connect to your server via SSH, copy the files in the specified remote path, create the .env file for you based on your github environment variables, and run `docker compose up -d --build` to start the n8n instance.
 
-## Using an External Reverse Proxy
-You might want to deploy n8n on a server that already has a Apache or set up to handle SSL termination and routing.
-If you are using an external reverse proxy (e.g., Nginx or Apache), you can disable Traefik by setting `ENABLE_TRAEFIK=0` in your GitHub environment variables.
+## Reverse proxy
+
+A server-wide Traefik that owns ports 80/443 and the external `proxy` network,
+with an entrypoint `websecure` and a certificate resolver `le`, routes n8n from
+the labels of `docker-compose.yml` as-is: nothing to configure.
 
 When Nginx Proxy Manager runs on the same Docker host, it can reach n8n through
 the shared external `proxy` network. The deployment workflow creates this
